@@ -1,13 +1,5 @@
 import speech_recognition as sr
-from gtts import gTTS
-import os
-from chatterbot import ChatBot
-from chatterbot.trainers import ChatterBotCorpusTrainer
-
-# Initialize ChatBot
-chatbot = ChatBot("Assistant")
-trainer = ChatterBotCorpusTrainer(chatbot)
-trainer.train("chatterbot.corpus.english")
+from openai import OpenAI
 
 def listen_to_speech():
     recognizer = sr.Recognizer()
@@ -15,26 +7,30 @@ def listen_to_speech():
         print("Listening...")
         audio = recognizer.listen(source)
     try:
-        text = recognizer.recognize_google(audio)
-        print(f"Recognized: {text}")
-        return text
+        speech_text = recognizer.recognize_google(audio)
+        print(f"You said: {speech_text}")
+        return speech_text
     except sr.UnknownValueError:
-        return "I could not understand audio."
+        print("Google Speech Recognition could not understand audio")
     except sr.RequestError as e:
-        return "Could not request results; {0}".format(e)
+        print(f"Could not request results from Google Speech Recognition service; {e}")
 
-def respond(text):
-    response = chatbot.get_response(text)
-    print(f"Response: {response}")
-    tts = gTTS(text=str(response), lang='en')
-    tts.save("response.mp3")
-    os.system("mpg321 response.mp3")
+def ask_openai(question):
+    client = OpenAI(api_key="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")
+
+
+    stream = client.chat.completions.create(
+    model="gpt-3.5-turbo",
+    messages=[{"role": "user", "content": question}],
+    stream=True,
+    )
+    for chunk in stream:
+        print(chunk.choices[0].delta.content or "", end="")
 
 def main():
-    while True:
-        query = listen_to_speech()
-        if query:
-            respond(query)
+    speech_text = listen_to_speech()
+    if speech_text:
+        ask_openai(speech_text)
 
 if __name__ == "__main__":
     main()

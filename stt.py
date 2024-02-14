@@ -1,18 +1,19 @@
-import os
 import speech_recognition as sr
 import pyttsx3
-import openai
-
+from openai import OpenAI
 
 def ask_openai(question):
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo", # You can change the model if needed
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": question},
-        ],
+    response = ""
+    client = OpenAI(api_key="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")
+    stream = client.chat.completions.create(
+    model="gpt-3.5-turbo",
+    messages=[{"role": "user", "content": question}],
+    stream=True,
     )
-    return response.choices[0].message['content']
+    for chunk in stream:
+        response+=chunk.choices[0].delta.content or ""
+
+    return response
 
 # obtain audio from the microphone
 r = sr.Recognizer()
@@ -31,12 +32,15 @@ while True:
         try:
             speech = r.recognize_google(audio)
             if "hey jarvis" in speech.lower():
-                print("I am listening...")
+                print("Yes sir?")
                 audio = r.listen(source)
                 
                 try:
-                    print("You said: " + r.recognize_google(audio))
-                    engine.say("You said: " + r.recognize_google(audio))
+                    speech = r.recognize_google(audio)
+                    print("You said: " + speech)
+                    response = ask_openai(speech)
+                    print("Response: ", response)
+                    engine.say(str(response))
                     engine.runAndWait()
                 except sr.UnknownValueError:
                     print("Google Speech Recognition could not understand audio")
