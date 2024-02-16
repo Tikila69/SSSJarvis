@@ -24,17 +24,19 @@ engine.setProperty('rate', 150)
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[0].id)
 
+cont = True
+
 # continuously listen for "hey jarvis"
-while True:
+while cont:
     with sr.Microphone() as source:
         print("Listening...")
         audio = r.listen(source)
         try:
             speech = r.recognize_google(audio)
             if "hey jarvis" in speech.lower():
-                print("Yes sir?")
+                engine.say("Yes, sir?")
+                engine.runAndWait()
                 audio = r.listen(source)
-                
                 try:
                     speech = r.recognize_google(audio)
                     print("You said: " + speech)
@@ -46,6 +48,8 @@ while True:
                     print("Google Speech Recognition could not understand audio")
                 except sr.RequestError as e:
                     print("Could not request results from Google Speech Recognition service; {0}".format(e))
+            elif "shut down" in speech.lower():
+                cont = False
         except sr.UnknownValueError:
             pass
         except sr.RequestError as e:
