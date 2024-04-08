@@ -1,8 +1,9 @@
 import speech_recognition as sr
 import pyttsx3
 from openai import OpenAI
-import weatherChecker
 import RPi.GPIO as GPIO
+import requests
+import json
 
 def ask_openai(question):
     response = ""
@@ -17,16 +18,26 @@ def ask_openai(question):
 
     return response
 
+def weatherChecker(when):
+    data = requests.get('https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/Hønefoss,NO/'+when+'?key=LZXY8XB4SR6YC6RSFVVS952JG').json()
+
+
+    description = data["days"][0]["description"]
+    high = data["days"][0]["tempmax"]
+    low = data["days"][0]["tempmin"]
+    
+    return description, high, low
+
 def turn_on(pin):
     GPIO.output(pin, GPIO.HIGH)
 
 def turn_off(pin):
     GPIO.output(pin, GPIO.LOW)
 
-# obtain audio from the microphone
+
 r = sr.Recognizer()
 
-# convert text to speech
+
 engine = pyttsx3.init()
 engine.setProperty('rate', 150)
 voices = engine.getProperty('voices')
@@ -45,23 +56,19 @@ turn_off(red_pin)
 
 cont = True
 
-# continuously listen for "hey jarvis"
+
 try:
     while cont:
         with sr.Microphone(device_index=2) as source:
-            print("Listening...")
             turn_off(red_pin)
             turn_on(green_pin)
             audio = r.listen(source)
-            print("fÃ¸r error")
             speech = r.recognize_google(audio)
-            print("denne ser vi ikke")
             if "hey jarvis" in speech.lower():
                 try:
                     turn_off(green_pin)
                     turn_on(red_pin)
                     engine.say("Yes, sir?")
-                    print("Yes, sir?")
                     turn_off(red_pin)
                     turn_on(green_pin)
                     engine.runAndWait()
@@ -94,7 +101,6 @@ try:
                             speech = r.recognize_google(audio)
                             print("You said: " + speech)
                             #response = ask_openai(speech)
-                            print("Response: ", response)
                             engine.say(str(response))
                             engine.runAndWait()
                         except sr.UnknownValueError:
@@ -106,4 +112,4 @@ try:
                 except sr.RequestError as e:
                     print("Could not request results from Google Speech Recognition service; {0}".format(e))
 except Exception as e:
-    print("")
+    pass
