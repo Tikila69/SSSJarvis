@@ -7,7 +7,7 @@ import json
 
 def ask_openai(question):
     response = ""
-    client = OpenAI(api_key="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")
+    client = OpenAI(api_key="INSERT KEY HERE")
     stream = client.chat.completions.create(
     model="gpt-3.5-turbo",
     messages=[{"role": "user", "content": question}],
@@ -19,7 +19,8 @@ def ask_openai(question):
     return response
 
 def weatherChecker(when):
-    data = requests.get('https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/Hønefoss,NO/'+when+'?key=LZXY8XB4SR6YC6RSFVVS952JG').json()
+    key = "INSERT KEY HERE"
+    data = requests.get('https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/Hønefoss,NO/'+when+'?key='+key+'').json()
 
 
     description = data["days"][0]["description"]
